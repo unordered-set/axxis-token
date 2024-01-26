@@ -7,7 +7,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract NewTokenImpl is UUPSUpgradeable {
-    function balanceOf(address owner) public returns (uint256) {
+    function balanceOf(address) public pure returns (uint256) {
         return 999;
     }
 

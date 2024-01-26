@@ -7,6 +7,10 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 
 
 contract AXXISToken is ERC20Upgradeable, UUPSUpgradeable, OwnableUpgradeable {
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(address supply_receiver) public initializer {
         __ERC20_init("AXXIS", "XXS");
         __UUPSUpgradeable_init();
