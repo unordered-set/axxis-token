@@ -16,7 +16,7 @@ contract AXXISToken is ERC20Upgradeable, UUPSUpgradeable, OwnableUpgradeable {
         __UUPSUpgradeable_init();
         __Ownable_init(supply_receiver);
         
-        uint256 supply = 800_000_000 * 10**decimals();
+        uint256 supply = 800_000_000_000 * 10**decimals();
         _mint(supply_receiver, supply);
     }
 

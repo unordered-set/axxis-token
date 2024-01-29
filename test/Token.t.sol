@@ -30,7 +30,7 @@ contract AXXISTokenTest is Test {
     }
 
     function test_initial_balance() public {
-        assertEq(token.balanceOf(admin), 800_000_000_000_000_000_000_000_000);
+        assertEq(token.balanceOf(admin), 800_000_000_000_000_000_000_000_000_000);
     }
 
     function test_extra_mint_is_impossible() public {
