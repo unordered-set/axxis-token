@@ -11,7 +11,7 @@ contract AXXISSale is UUPSUpgradeable, OwnableUpgradeable {
     uint40 public totalSold;
     uint32 public saleEndTimestamp;
     mapping(address => uint40) public allocations;
-    mapping(IERC20 => uint256) public priceDivisors;
+    mapping(IERC20 => uint256) priceDivisors;
 
     event TokensBought(
         address indexed buyer,

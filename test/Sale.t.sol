@@ -7,11 +7,21 @@ import {Test, console2} from "forge-std/Test.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {MockERC20} from "forge-std/mocks/MockERC20.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 
 contract EasyMintableMockERC20 is MockERC20 {
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
     }
+}
+
+contract NewSaleImpl is UUPSUpgradeable {
+    function allocations(address) public returns (uint256) {
+        return 999;
+    }
+
+    function _authorizeUpgrade(address) internal override {}
 }
 
 contract AXXISSaleTest is Test {
@@ -20,6 +30,8 @@ contract AXXISSaleTest is Test {
     IERC20 public usdt;
     IERC20 public usdc;
     IERC20 public dai;
+
+    address admin = address(0x123);
 
     function setUp() public {
         EasyMintableMockERC20 usdtMock = new EasyMintableMockERC20();
@@ -43,7 +55,7 @@ contract AXXISSaleTest is Test {
         IERC20[] memory supportedCurrencies = new IERC20[](2);
         supportedCurrencies[0] = usdt;
         supportedCurrencies[1] = usdc;
-        sale.initialize(address(this), supportedCurrencies);
+        sale.initialize(admin, supportedCurrencies);
     }
 
     function test_buyFromDifferentAccountsUsingDifferentCurrencies() public {
@@ -57,8 +69,8 @@ contract AXXISSaleTest is Test {
         usdt.transfer(buyer2, 1_000_000_000000);
         usdc.transfer(buyer2, 1_000_000_00000000);
 
-        uint256 usdtAdminBalanceBefore = usdt.balanceOf(address(this));
-        uint256 usdcAdminBalanceBefore = usdc.balanceOf(address(this));
+        uint256 usdtAdminBalanceBefore = usdt.balanceOf(admin);
+        uint256 usdcAdminBalanceBefore = usdc.balanceOf(admin);
 
         // Buyer 1 buys 100 USDT worth of tokens.
         vm.startPrank(buyer1);
@@ -86,11 +98,11 @@ contract AXXISSaleTest is Test {
         vm.stopPrank();
 
         assertEq(
-            usdt.balanceOf(address(this)),
+            usdt.balanceOf(admin),
             usdtAdminBalanceBefore + 100_000000 + 123_000000
         );
         assertEq(
-            usdc.balanceOf(address(this)),
+            usdc.balanceOf(admin),
             usdcAdminBalanceBefore + 76_00000000 + 700_00000000
         );
     }
@@ -102,14 +114,27 @@ contract AXXISSaleTest is Test {
     }
 
     function testFail_buyAfterSaleEnd() public {
+        vm.startPrank(admin);
         sale.setEndTimestamp(block.timestamp - 1);
         usdt.approve(address(sale), 10_000_000000);
         sale.buy(usdt, 100_000000);
+        vm.stopPrank();
     }
 
     function testFail_endSaleAsNonOwner() public {
-        vm.deal(address(0x1), 10 ether);
-        vm.startPrank(address(0x1));
         sale.setEndTimestamp(block.timestamp + 1);
+    }
+
+    function test_adminCanChangeImplementation() public {
+        NewSaleImpl newimpl = new NewSaleImpl();
+        vm.startPrank(admin);
+        sale.upgradeToAndCall(address(newimpl), bytes(""));
+        vm.stopPrank();
+        assertEq(sale.allocations(address(0x987)), 999);
+    }
+
+    function testFail_nonAdminProxyUpgrade() public {
+        NewSaleImpl newimpl = new NewSaleImpl();
+        sale.upgradeToAndCall(address(newimpl), bytes(""));
     }
 }
